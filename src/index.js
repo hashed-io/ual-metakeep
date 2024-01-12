@@ -1,5 +1,5 @@
 // const { NbvStorageApi } = require('../src/model/polkadot-pallets')
-const { MetakeepAuthenticator } = require('../src/model/MetakeepUAL')
+const { MetakeepAuthenticator } = require('./model/MetakeepUAL.ts')
 
 module.exports = {
   // NbvStorageApi
