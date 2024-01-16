@@ -47,6 +47,7 @@ const {
         throw new Error('MetakeepAuthenticator: Missing appId');
       }
       this.appId = options.appId;
+      this.telosApi = options.telosApi;
       this.chains = chains;
       this.accountEmail = '';
       try {
@@ -125,14 +126,14 @@ const {
     }
     
     async createAccount(publicKey) {
-        return axios.post(`${this.apiRpc.endpoint}/v1/accounts/random`, {
+        return axios.post(`${this.telosApi}/v1/accounts/random`, {
             ownerKey: publicKey,
             activeKey: publicKey,
         }).then(response => response.data.accountName);
     }
     
     resolveAccountName(wallet) {
-        console.log('resolveAccountName() ');
+        // console.log('resolveAccountName() ');
         return new Promise(async (resolve, reject) => {
             let accountName = '';
             if (!this.metakeep) {
