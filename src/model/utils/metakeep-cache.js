@@ -35,7 +35,6 @@ class MetakeepCache {
   }
 
   assertCache (email, chainId) {
-    console.log('assertCache', { email, chainId })
     if (!this.cache[email]) {
       this.cache[email] = {
         wallet: {
@@ -80,7 +79,6 @@ class MetakeepCache {
 
   getAccountNames (email, chainId) {
     this.assertCache(email, chainId)
-    console.log('getAccountNames', this.cache, { email, chainId })
     return this.cache[email]?.[chainId]?.accounts ?? []
   }
 
@@ -109,6 +107,13 @@ class MetakeepCache {
     }
     this.logged = email
     this.saveCache()
+  }
+
+  cleanCache () {
+    window.localStorage.removeItem('account')
+    window.localStorage.removeItem('metakeep.data')
+    window.localStorage.removeItem('loglevel')
+    window.localStorage.removeItem('returning')
   }
 }
 
