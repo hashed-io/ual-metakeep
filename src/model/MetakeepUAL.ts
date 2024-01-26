@@ -309,12 +309,15 @@ class MetakeepAuthenticator extends Authenticator {
     }
 
     async createAccount(publicKey) {
-        return axios.post(this.accountCreateAPI, {
+        const { response } = await axios.post(this.accountCreateAPI, {
             ownerKey: publicKey,
             activeKey: publicKey,
             jwt: this.userCredentials.jwt,
             // suggestedName: 'somevalidname', // we are not using this optional parameter for now
-        }).then(response => response.data.accountName);
+        })
+        // .then(response => response.data.accountName);
+        debugger
+        return response.data.accountName
     }
 
     resolveAccountName(wallet) {
@@ -362,7 +365,8 @@ class MetakeepAuthenticator extends Authenticator {
                 return resolve(accountName);
             } catch (error) {
                 console.error('error', error);
-                throw new Error('Error getting account name');
+                // throw new Error('Error getting account name');
+                reject(error);
             }
         });
     }
@@ -395,10 +399,11 @@ class MetakeepAuthenticator extends Authenticator {
                 email: user.email,
         })
 
-        const accountName = await this.resolveAccountName(wallet);
-        const publicKey = metakeepCache.getEosAddress(this.userCredentials.email);
-
         try {
+            const accountName = await this.resolveAccountName(wallet);
+            const publicKey = metakeepCache.getEosAddress(this.userCredentials.email);
+
+
             const permission = 'active';
             this.loading = false;
             const userInstance = new MetakeepUser({
@@ -414,7 +419,8 @@ class MetakeepAuthenticator extends Authenticator {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err) {
             this.loading = false;
-            throw new UALError(err.message, UALErrorType.Login, err, 'MetakeepAuthenticator');
+            let message = (err.response?.data || err.message)
+            throw new UALError(message, UALErrorType.Login, err, 'MetakeepAuthenticator');
         }
     };
 
