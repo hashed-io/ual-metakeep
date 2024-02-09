@@ -122,6 +122,7 @@ class FuelUserWrapper extends User {
 
       // Interpret the resulting JSON
       const rpResponse = await cosigned.json() /* as ResourceProviderResponse */
+      console.log('rpResponse', rpResponse)
 
       switch (rpResponse.code) {
         case 402: {
