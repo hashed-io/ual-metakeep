@@ -310,7 +310,7 @@ class MetakeepAuthenticator extends Authenticator {
 
     async createAccount(publicKey) {
         try {
-            const { response } = await axios.post(this.accountCreateAPI, {
+            const res = await axios.post(this.accountCreateAPI, {
                 ownerKey: publicKey,
                 activeKey: publicKey,
                 // jwt: this.userCredentials.jwt,
@@ -318,8 +318,8 @@ class MetakeepAuthenticator extends Authenticator {
             })
             // .then(response => response.data.accountName);
             // debugger
-            console.log("create account response: " + response)
-            return response.data.accountName
+            console.log("create account response: ", res)
+            return res.data.accountName
         } catch (e) {
             console.error("Error trying to create account, please try again.", e);
             throw new Error("Error trying to create account, please try again.")
