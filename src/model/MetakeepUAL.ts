@@ -309,15 +309,22 @@ class MetakeepAuthenticator extends Authenticator {
     }
 
     async createAccount(publicKey) {
-        const { response } = await axios.post(this.accountCreateAPI, {
-            ownerKey: publicKey,
-            activeKey: publicKey,
-            jwt: this.userCredentials.jwt,
-            // suggestedName: 'somevalidname', // we are not using this optional parameter for now
-        })
-        // .then(response => response.data.accountName);
-        debugger
-        return response.data.accountName
+        try {
+            const res = await axios.post(this.accountCreateAPI, {
+                ownerKey: publicKey,
+                activeKey: publicKey,
+                // jwt: this.userCredentials.jwt,
+                // suggestedName: 'somevalidname', // we are not using this optional parameter for now
+            })
+            // .then(response => response.data.accountName);
+            // debugger
+            console.log("create account response: ", res)
+            return res.data.accountName
+        } catch (e) {
+            console.error("Error trying to create account, please try again.", e);
+            throw new Error("Error trying to create account, please try again.")
+        }
+
     }
 
     resolveAccountName(wallet) {
