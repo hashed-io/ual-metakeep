@@ -38,6 +38,7 @@
     "find-process": "^1.4.7",
     "metakeep": "^2.2.0",
     "stream-browserify": "^3.0.0",
-    "universal-authenticator-library": "^0.3.0"
+    "universal-authenticator-library": "^0.3.0",
+    "vue": "^3.4.21"
   }
 }
