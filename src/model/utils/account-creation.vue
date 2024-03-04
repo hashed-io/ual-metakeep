@@ -2,12 +2,13 @@
 <div>
   <div class="cModal" v-if="showModal == true">
     <div class="cModal-content">
-        <h4 class="cTitle" v-if="isLoading == false">Account creation</h4>
+        <p class="cTitle" v-if="isLoading == false">Account creation</p>
         <div v-if="isLoading == false">
           <label for="accountName" class="label">Telos account</label>
           <br>
           <input v-model="telosAccountName" id="accountName" class="cInput" autocomplete="off">
-          <p class="cErrorLabel"> This is an error message</p>
+          <br/>
+          <p class="cErrorLabel" v-if="errorMessage"> {{ errorMessage }}</p>
           <br>
           <div class="cButtonsContainer">
             <button class="cButton cancelButton" @click="closeModal">Cancel</button>
@@ -41,10 +42,13 @@
 <script setup>
 import { onMounted, ref, defineProps, computed } from 'vue'
 
+const props = defineProps(['onCancel', 'onCreateAccount'])
+
 const showModal = ref(false)
 const isLoading = ref(false)
 const telosAccountName = ref(undefined)
-const props = defineProps(['onCancel', 'onCreateAccount'])
+const errorMessage = ref(undefined)
+
 
 
 onMounted(() => {
@@ -60,24 +64,37 @@ const closeModal = () => {
     props.onCancel()
 }
 
-function createAccount () {
-    validateAccountName()
-    props.onCreateAccount(telosAccountName.value)
+async function createAccount () {
+    if (await validateAccountName() === true) {
+        props.onCreateAccount(telosAccountName.value)
+    }
 }
 
 const apiURL = "https://telos-account-creator-test-c1d9d1af38a4.herokuapp.com/v1"
 
 async function validateAccountName () {
     try {
+        errorMessage.value = undefined
         const endpointURL = `${apiURL}/accounts/${telosAccountName.value}`
-        console.log("endpointURL", endpointURL)
         isLoading.value = true
-        const response = await fetch(endpointURL)
-        console.log("response", response)
+        const response = await fetch(endpointURL, {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        if (response.status === 400) {
+            const reader = response.body.getReader();
+            const responseBody = await reader.read();
+            errorMessage.value = new TextDecoder().decode(responseBody.value);
+            return false
+        }
+        return true
     } catch (e) {
+        errorMessage.value = e.message || e
     } finally {
         isLoading.value = false
     }
+    return false
 }
 
 </script>
@@ -116,7 +133,8 @@ async function validateAccountName () {
 .cTitle {
   color: #333; /* Cambiado a un tono más oscuro */
   font-size: 1.2rem; /* Aumentado el tamaño de fuente */
-  margin-bottom: 20px; /* Agregado margen inferior */
+  margin-top: 0px; /* Agregado margen inferior */
+  margin-bottom: 10px; /* Agregado margen inferior */
 }
 
 .approveButton, .cancelButton {

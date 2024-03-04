@@ -315,8 +315,6 @@ class MetakeepAuthenticator extends Authenticator {
     async createAccount(publicKey) {
         try {
             const modalContainer = document.getElementById('c-app')
-            console.log("modalContainer", modalContainer)
-
             return new Promise((approve, reject) => {
                 const app = createApp(AccountCreation, {
                     onCancel: () => {
@@ -326,7 +324,6 @@ class MetakeepAuthenticator extends Authenticator {
                         console.log('Evento recibido: onCreateAccount: ', data);
                     }
                   })
-                console.log("Creating modal", app)
                 const vm = app.mount(modalContainer);
             })
 
