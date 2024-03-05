@@ -4,9 +4,14 @@
     <div class="cModal-content">
         <p class="cTitle" v-if="isLoading == false">Account creation</p>
         <div v-if="isLoading == false">
-          <label for="accountName" class="label">Telos account</label>
+          <label for="accountName" class="label">Telos account name</label>
           <br>
-          <input v-model="telosAccountName" id="accountName" class="cInput" autocomplete="off">
+          <input
+            v-model="telosAccountName"
+            id="accountName"
+            :class="inputAccountNameClass"
+            autocomplete="off"
+          >
           <br/>
           <p class="cErrorLabel" v-if="errorMessage"> {{ errorMessage }}</p>
           <br>
@@ -41,22 +46,28 @@
 
 <script setup>
 import { onMounted, ref, defineProps, computed } from 'vue'
-
-const props = defineProps(['onCancel', 'onCreateAccount'])
+const props = defineProps(['onCancel', 'onCreateAccount', 'executeRecaptchaRequest', 'publicKey', 'apiURL'])
 
 const showModal = ref(false)
 const isLoading = ref(false)
 const telosAccountName = ref(undefined)
 const errorMessage = ref(undefined)
+const recaptchaToken = ref(undefined)
 
-
+const apiURL = props.apiURL
 
 onMounted(() => {
     showModal.value = true
 })
 
-const isCreateButtonDisabled = computed(() => {
-    return telosAccountName.value?.length === 0
+const inputAccountNameClass = computed(() => {
+    if (telosAccountName.value === undefined) {
+        return 'cInput'
+    }
+
+    const isValidFormat = /^([a-z]|[1-5]|[.]){1,12}$/.test(telosAccountName.value.toLowerCase())
+    const inputClass = isValidFormat ? 'cInput' : 'cInput cInput-invalid'
+    return inputClass
 })
 
 const closeModal = () => {
@@ -65,12 +76,47 @@ const closeModal = () => {
 }
 
 async function createAccount () {
-    if (await validateAccountName() === true) {
-        props.onCreateAccount(telosAccountName.value)
-    }
-}
+    try {
+        const isValidAccount = await validateAccountName() === true
+        if (isValidAccount) {
+            isLoading.value = true
+            recaptchaToken.value = await props.executeRecaptchaRequest()
 
-const apiURL = "https://telos-account-creator-test-c1d9d1af38a4.herokuapp.com/v1"
+            const endpointURL = `${apiURL}/recaptchaCreate`
+
+            const response = await fetch(endpointURL, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        recaptchaResponse: recaptchaToken.value,
+                        accountName: telosAccountName.value,
+                        ownerKey: props.publicKey,
+                        activeKey: props.publicKey
+                    }
+                )
+
+            })
+
+            if (response.status === 400 || response.status === 500) {
+                const reader = response.body.getReader();
+                const responseBody = await reader.read();
+                errorMessage.value = new TextDecoder().decode(responseBody.value);
+                isLoading.value = false
+                return false
+            }
+
+            props.onCreateAccount(telosAccountName.value)
+            showModal.value = false
+        }
+    } catch {
+        errorMessage.value = e.message || e
+        isLoading.value = false
+    }
+
+}
 
 async function validateAccountName () {
     try {
@@ -96,7 +142,6 @@ async function validateAccountName () {
     }
     return false
 }
-
 </script>
 
 <style>
@@ -108,7 +153,7 @@ async function validateAccountName () {
 
 .cInput {
   padding: 15px;
-  width: 94%;
+  width: 100%;
   border-radius: 8px;
   background-color: #f2f2f2;
   border: 1px solid #ccc;
@@ -118,6 +163,14 @@ async function validateAccountName () {
 
 .cInput:focus {
   border-color: #2196F3; /* Cambia el color del borde al enfocar */
+}
+
+.cInput-invalid {
+  border: 1px solid #f44336;
+}
+
+.cInput-invalid:focus{
+  border: 1px solid #f44336;
 }
 
 .cButtonsContainer {

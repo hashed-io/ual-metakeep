@@ -17,10 +17,10 @@ import { Dialog } from 'quasar'
 
 // this simulates the getChain function from OBE
 const getChain = () => ({
-  getHyperionEndpoint: () => (process.env.HYPERION_ENDPOINT),
+  getHyperionEndpoint: () => (process.env.HYPERION_ENDPOINT || ''),
   getFuelRPCEndpoint: () => {
     if (typeof process.env.FUEL_RPC === 'string') {
-      return process.env.FUEL_RPC
+      return process.env.FUEL_RPC || ''
     } else {
       return ''
     }
@@ -34,9 +34,8 @@ const maxFee = 0.05
 const expireSeconds = 3600
 
 const chain = getChain()
-const client = new APIClient({
-  url: chain.getHyperionEndpoint()
-})
+
+let client
 
 const fuelrpc = chain.getFuelRPCEndpoint()
 const resourceProviderEndpoint = `${fuelrpc}/v1/resource_provider/request_transaction`
@@ -235,9 +234,19 @@ class FuelUserWrapper extends User {
 
 // create an instance of FuelUserWrapper class and check fuel service availability
 export async function initFuelUserWrapper (user) {
-  const fuelUserWrapper = new FuelUserWrapper(user)
-  await fuelUserWrapper.setAvailability()
-  return fuelUserWrapper
+  try {
+    try {
+      client = new APIClient({
+        url: chain.getHyperionEndpoint()
+      })
+    } catch (error) {
+    }
+    const fuelUserWrapper = new FuelUserWrapper(user)
+    await fuelUserWrapper.setAvailability()
+    return fuelUserWrapper
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 // Auxiliar functions to validate with the user the use of the service

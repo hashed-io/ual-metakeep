@@ -26,8 +26,7 @@ class MetakeepUser extends User {
         permission,
         publicKey,
         chainId,
-        rpc,
-        accountCreateAPI,
+        rpc
     }) {
         super();
         this.keys = [publicKey];
@@ -35,7 +34,6 @@ class MetakeepUser extends User {
         this.permission = permission;
         this.chainId = chainId;
         this.rpc = rpc;
-        this.accountCreateAPI = accountCreateAPI;
         this.eosioCore = new APIClient({ url: rpc.endpoint });
     }
 
@@ -210,12 +208,13 @@ class MetakeepAuthenticator extends Authenticator {
             throw new Error('MetakeepAuthenticator: Missing appId');
         }
         this.appId = options.appId;
-        this.accountCreateAPI = options.accountCreateAPI;
         this.chains = chains;
         this.userCredentials = {
             email: metakeepCache.getLogged(),
             jwt: '',
         };
+        this.executeRecaptchaRequest = options.executeRecaptchaRequest
+        this.apiURL = options.apiURL
     }
 
     saveCache() {
@@ -320,24 +319,15 @@ class MetakeepAuthenticator extends Authenticator {
                     onCancel: () => {
                       reject("User closed account creation dialog.")
                     },
-                    onCreateAccount: (data) => {
-                        console.log('Evento recibido: onCreateAccount: ', data);
-                    }
+                    onCreateAccount: (accountName) => {
+                      approve(accountName)
+                    },
+                    executeRecaptchaRequest: this.executeRecaptchaRequest,
+                    publicKey: publicKey,
+                    apiURL: this.apiURL
                   })
-                const vm = app.mount(modalContainer);
+                app.mount(modalContainer);
             })
-
-
-            // const res = await axios.post(this.accountCreateAPI, {
-            //     ownerKey: publicKey,
-            //     activeKey: publicKey,
-            //     // jwt: this.userCredentials.jwt,
-            //     // suggestedName: 'somevalidname', // we are not using this optional parameter for now
-            // })
-            // .then(response => response.data.accountName);
-            // debugger
-            // console.log("create account response: ", res)
-            // return res.data.accountName
         } catch (e) {
             console.error("Error trying to create account, please try again.", e);
             throw new Error("Error trying to create account, please try again.")
@@ -377,7 +367,6 @@ class MetakeepAuthenticator extends Authenticator {
                     public_key: publicKey,
                 });
                 const accountExists = response?.data?.account_names.length > 0;
-                // console.log('accountExists: ', accountExists, 'pero la descartamos');
                 if (accountExists) {
                     accountName = response.data.account_names[0];
                 } else {
@@ -435,8 +424,7 @@ class MetakeepAuthenticator extends Authenticator {
                 permission,
                 publicKey,
                 chainId: this.chainId,
-                rpc: this.rpc,
-                accountCreateAPI: this.accountCreateAPI,
+                rpc: this.rpc
             });
 
             return [userInstance];
