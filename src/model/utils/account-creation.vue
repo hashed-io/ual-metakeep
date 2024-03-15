@@ -100,7 +100,7 @@ async function createAccount () {
 
             })
 
-            if (response.status === 400 || response.status === 500) {
+            if (response.status === 400 || response.status === 500 || response.status === 403) {
                 const reader = response.body.getReader();
                 const responseBody = await reader.read();
                 errorMessage.value = new TextDecoder().decode(responseBody.value);

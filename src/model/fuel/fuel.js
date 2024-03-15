@@ -34,8 +34,9 @@ const maxFee = 0.05
 const expireSeconds = 3600
 
 const chain = getChain()
-
-let client
+const client = new APIClient({
+  url: chain.getHyperionEndpoint()
+})
 
 const fuelrpc = chain.getFuelRPCEndpoint()
 const resourceProviderEndpoint = `${fuelrpc}/v1/resource_provider/request_transaction`
@@ -121,18 +122,17 @@ class FuelUserWrapper extends User {
 
       // Interpret the resulting JSON
       const rpResponse = await cosigned.json() /* as ResourceProviderResponse */
-      console.log('rpResponse', rpResponse)
 
       switch (rpResponse.code) {
         case 402: {
-          // Resource Provider provided signature in exchange for a fee
-          // is ok to treat them with the same logic of code = 200?
-          // Yes according to this: https://gist.github.com/aaroncox/d74a73b3d9fbc20836c32ea9deda5d70#file-fuel-core-presign-js-L128-L159
-          // Aron rightly suggests that we should show and confirm the fee costs for this service:
-          // https://github.com/telosnetwork/open-block-explorer/pull/477#discussion_r1053417964
+        // Resource Provider provided signature in exchange for a fee
+        // is ok to treat them with the same logic of code = 200?
+        // Yes acording to this: https://gist.github.com/aaroncox/d74a73b3d9fbc20836c32ea9deda5d70#file-fuel-core-presign-js-L128-L159
+        // Aron rightly suggests that we should show and confirm the fee costs for this service:
+        // https://github.com/telosnetwork/open-block-explorer/pull/477#discussion_r1053417964
         }
         case 200: {
-          // Resource Provider provided signature for free
+        // Resource Provider provided signature for free
 
           const { data } = rpResponse
           const [, returnedTransaction] = data.request
@@ -146,7 +146,6 @@ class FuelUserWrapper extends User {
             transaction,
             data.costs
           )
-
           // validate with the user whether to use the service at all
           try {
             await confirmWithUser(this.user, fees)
@@ -156,17 +155,21 @@ class FuelUserWrapper extends User {
           }
 
           modifiedTransaction.signatures = [...data.signatures]
+          // SIG_K1_KWyEv3oYHywu15Wd2qz26Fh9skjDtzTQqjuwV5iiotq6WrJcjMJfhB64A7gsT4acftVVLxH47qb3bJ95sWkgZ9mK35Lsfs
+          // https://github.com/greymass/greymassfuel-eosjs-demos/issues/7
+          debugger
           // Sign the modified transaction
           const locallySigned/*: SignedTransactionResponse */ =
-                await this.user.signTransaction(
-                  modifiedTransaction,
-                  Object.assign(originalconfig, { broadcast: false })
-                ) /* as SignedTransactionResponse */
+          await this.user.signTransaction(
+            modifiedTransaction,
+            Object.assign({ broadcast: false }, originalconfig)
+          ) /* as SignedTransactionResponse */
 
           // When using CleosAuthenticator the transaction returns empty
           if (!locallySigned.transaction.signatures) {
-            return Promise.reject(Error(
-              'The transaction was not broadcasted because no signatures were obtained')
+            // eslint-disable-next-line prefer-promise-reject-errors
+            return Promise.reject(
+              'The transaction was not broadcasted because no signatures were obtained'
             )
           }
 
@@ -192,16 +195,16 @@ class FuelUserWrapper extends User {
           return Promise.resolve(finalResponse)
         }
         case 400: {
-          // Resource Provider refused to sign the transaction, aborting
+        // Resource Provider refused to sign the transaction, aborting
           break
         }
         default:
           // eslint-disable-next-line no-throw-literal
           throw (
             'Code ' +
-                (+rpResponse.code).toString() +
-                ' not expected from resource provider endpoint: ' +
-                resourceProviderEndpoint
+          (+rpResponse.code).toString() +
+          ' not expected from resource provider endpoint: ' +
+          resourceProviderEndpoint
           )
       }
 
@@ -234,26 +237,16 @@ class FuelUserWrapper extends User {
 
 // create an instance of FuelUserWrapper class and check fuel service availability
 export async function initFuelUserWrapper (user) {
-  try {
-    try {
-      client = new APIClient({
-        url: chain.getHyperionEndpoint()
-      })
-    } catch (error) {
-    }
-    const fuelUserWrapper = new FuelUserWrapper(user)
-    await fuelUserWrapper.setAvailability()
-    return fuelUserWrapper
-  } catch (error) {
-    console.error(error)
-  }
+  const fuelUserWrapper = new FuelUserWrapper(user)
+  await fuelUserWrapper.setAvailability()
+  return fuelUserWrapper
 }
 
 // Auxiliar functions to validate with the user the use of the service
 /*
 interface Preference {
-  remember?: boolean;
-  approve?: boolean;
+remember?: boolean;
+approve?: boolean;
 }
 */
 export default class GreymassFuelService {
@@ -305,16 +298,17 @@ async function confirmWithUser (user/*: User */, fees/*: string | null */) {
   mymodel = []
 
   return new Promise((resolve, reject) => {
-    // Try and see if the user already answer (remembered)
+  // Try and see if the user already answer (remembered)
     if (
       GreymassFuelService.preferences[username] &&
-      GreymassFuelService.preferences[username].remember
+    GreymassFuelService.preferences[username].remember
     ) {
       // ok, the user did. What's the answer?
       if (GreymassFuelService.preferences[username].approve) {
         resolve()
       } else {
-        reject(new Error('Error while trying to confirm user: ' + username))
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject()
       }
       return
     }
@@ -324,7 +318,8 @@ async function confirmWithUser (user/*: User */, fees/*: string | null */) {
       if (approve) {
         resolve()
       } else {
-        reject(new Error('Error while trying to set preferences: ' + username))
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject()
       }
     }
 
@@ -363,7 +358,7 @@ async function confirmWithUser (user/*: User */, fees/*: string | null */) {
         ]
       }
     })
-    // all answers should save the preferences
+      // all answers should save the preferences
       .onOk(() => handler(true))
       .onCancel(() => handler(false))
   })
@@ -378,18 +373,14 @@ function validateTransaction (
   transaction/*: Transaction */,
   costs /*: CostsType | null = null */
 )/*: string | null */ {
-  return null
+  // Ensure the first action is the `greymassnoop:noop`
+  validateNoop(modifiedTransaction)
 
-// FIXME: restore original code
-//    // Ensure the first action is the `greymassnoop:noop`
-//    validateNoop(modifiedTransaction);
-//
-//    // Ensure the actions within the transaction match what was provided
-//    return validateActions(signer, modifiedTransaction, transaction, costs);
+  // Ensure the actions within the transaction match what was provided
+  return validateActions(signer, modifiedTransaction, transaction, costs)
 }
 
 // Validate the actions of the modified transaction vs the original transaction
-// eslint-disable-next-line no-unused-vars
 function validateActions (
   signer/*: PermissionLevel */,
   modifiedTransaction/*: Transaction */,
@@ -458,7 +449,7 @@ function validateActionsContent (
 }
 /*
 interface AuxTransactionData {
-  [key: string]: string;
+[key: string]: string;
 }
 */
 function descerialize (data/*: unknown */)/*: AuxTransactionData */ {
@@ -478,8 +469,8 @@ function validateActionsFeeContent (
   }
   if (
     feeAction.account.toString() !== 'eosio.token' ||
-    feeAction.name.toString() !== 'transfer' ||
-    data.to.toString() !== 'fuel.gm'
+  feeAction.name.toString() !== 'transfer' ||
+  data.to.toString() !== 'fuel.gm'
   ) {
     throw new Error('Fee action was deemed invalid.')
   }
@@ -497,9 +488,9 @@ function validateActionsRamContent (
 
   if (
     ramAction.account.toString() !== 'eosio' ||
-    !['buyram', 'buyrambytes'].includes(String(ramAction.name)) ||
-    data.payer.toString() !== 'greymassfuel' ||
-    data.receiver.toString() !== signer.actor.toString()
+  !['buyram', 'buyrambytes'].includes(String(ramAction.name)) ||
+  data.payer.toString() !== 'greymassfuel' ||
+  data.receiver.toString() !== signer.actor.toString()
   ) {
     throw new Error('RAM action was deemed invalid.')
   }
@@ -513,7 +504,7 @@ function validateActionsOriginalContent (
   transaction /*: Transaction */
 ) {
   for (const [i] of modifiedTransaction.actions.entries()) {
-    // Skip the expected new actions
+  // Skip the expected new actions
     if (i < expectedNewActions) {
       continue
     }
@@ -521,29 +512,29 @@ function validateActionsOriginalContent (
     const original = transaction.actions[i - expectedNewActions]
     const action = modifiedTransaction.actions[i]
     const matchesAccount =
-      action.account.toString() === original.account.toString()
+    action.account.toString() === original.account.toString()
     const matchesAction = action.name.toString() === original.name.toString()
     const matchesLength =
-      action.authorization.length === original.authorization.length
+    action.authorization.length === original.authorization.length
     const matchesActor =
-      action.authorization[0].actor.toString() ===
-      original.authorization[0].actor.toString()
+    action.authorization[0].actor.toString() ===
+    original.authorization[0].actor.toString()
     const matchesPermission =
-      action.authorization[0].permission.toString() ===
-      original.authorization[0].permission.toString()
+    action.authorization[0].permission.toString() ===
+    original.authorization[0].permission.toString()
     const matchesData = action.data.toString() === original.data.toString()
     if (
       !action ||
-      !matchesAccount ||
-      !matchesAction ||
-      !matchesLength ||
-      !matchesActor ||
-      !matchesPermission ||
-      !matchesData
+    !matchesAccount ||
+    !matchesAction ||
+    !matchesLength ||
+    !matchesActor ||
+    !matchesPermission ||
+    !matchesData
     ) {
       const { account, name } = original
       throw new Error(
-                `Transaction returned by API has non-matching action at index ${i} (${account.toString()}:${name.toString()})`
+              `Transaction returned by API has non-matching action at index ${i} (${account.toString()}:${name.toString()})`
       )
     }
   }
@@ -557,7 +548,7 @@ function validateActionsLength (
 ) {
   if (
     modifiedTransaction.actions.length !==
-    transaction.actions.length + expectedNewActions
+  transaction.actions.length + expectedNewActions
   ) {
     throw new Error('Transaction returned contains additional actions.')
   }
@@ -569,22 +560,21 @@ const expectedCosignerAccountName = Name.from('greymassfuel')
 const expectedCosignerAccountPermission = Name.from('cosign')
 
 // Make sure the first action is the greymassnoop:noop and properly defined
-// eslint-disable-next-line no-unused-vars
 function validateNoop (modifiedTransaction/*: Transaction */) {
   const [firstAction] = modifiedTransaction.actions
   const [firstAuthorization] = firstAction.authorization
   if (
     firstAction.account.toString() !== expectedCosignerContract.toString() ||
-    firstAction.name.toString() !== expectedCosignerAction.toString() ||
-    firstAuthorization.actor.toString() !==
-      expectedCosignerAccountName.toString() ||
-    firstAuthorization.permission.toString() !==
-      expectedCosignerAccountPermission.toString() ||
-    (JSON.stringify(firstAction.data) !== '""' &&
-      JSON.stringify(firstAction.data) !== '{}')
+  firstAction.name.toString() !== expectedCosignerAction.toString() ||
+  firstAuthorization.actor.toString() !==
+    expectedCosignerAccountName.toString() ||
+  firstAuthorization.permission.toString() !==
+    expectedCosignerAccountPermission.toString() ||
+  (JSON.stringify(firstAction.data) !== '""' &&
+    JSON.stringify(firstAction.data) !== '{}')
   ) {
     throw new Error(
-            `First action within transaction response is not valid noop (${expectedCosignerContract.toString()}:${expectedCosignerAction.toString()} signed by ${expectedCosignerAccountName.toString()}:${expectedCosignerAccountPermission.toString()}).`
+          `First action within transaction response is not valid noop (${expectedCosignerContract.toString()}:${expectedCosignerAction.toString()} signed by ${expectedCosignerAccountName.toString()}:${expectedCosignerAccountPermission.toString()}).`
     )
   }
 }
