@@ -42,10 +42,11 @@ class MetakeepUser extends User {
     }
 
     handleCatchError(error) {
+        const errorMessage = error.message || error
         if (error.status === 'USER_REQUEST_DENIED') {
             return new Error('antelope.evm.error_transaction_canceled');
         } else {
-            return new Error('antelope.evm.error_send_transaction');
+            return new Error(errorMessage);
         }
     }
     
@@ -90,7 +91,6 @@ class MetakeepUser extends User {
             const expiration = originalTransaction.expiration ?? transaction.expiration.toString();
             const ref_block_num = originalTransaction.ref_block_num ?? transaction.ref_block_num.toNumber();
             const ref_block_prefix = originalTransaction.ref_block_prefix ?? transaction.ref_block_prefix.toNumber();
-    
             // convert actions to JSON
             const actions = transaction.actions.map(a => ({
                 account: a.account.toJSON(),

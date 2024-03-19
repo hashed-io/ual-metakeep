@@ -2,7 +2,7 @@
 <div>
   <div class="cModal" v-if="showModal == true">
     <div class="cModal-content">
-        <p class="cTitle" v-if="isLoading == false">Account creation</p>
+        <p class="cTitle" v-if="isLoading == false">TLOS Account creation</p>
         <div v-if="isLoading == false">
           <label for="accountName" class="label">Telos account name</label>
           <br>
@@ -11,14 +11,16 @@
             id="accountName"
             :class="inputAccountNameClass"
             autocomplete="off"
+            @input="toLowerCase"
           >
           <br/>
           <p class="cErrorLabel" v-if="errorMessage"> {{ errorMessage }}</p>
+          <p class="cErrorLabel" v-if="!isValidAccountName && telosAccountName">The Telos account must consist of exactly 12 characters, which can include lowercase letters from 'a' to 'z' and numbers from '0' to '9'. No spaces or special characters are allowed.</p>
           <br>
           <div class="cButtonsContainer">
             <button class="cButton cancelButton" @click="closeModal">Cancel</button>
             <button
-                class="cButton approveButton"
+                :class="['cButton', 'approveButton', { 'disabled': !isValidAccountName }]"
                 @click="createAccount"
             >Create account</button>
           </div>
@@ -60,14 +62,24 @@ onMounted(() => {
     showModal.value = true
 })
 
+const toLowerCase = () => {
+  telosAccountName.value = telosAccountName.value.toLowerCase();
+}
+
 const inputAccountNameClass = computed(() => {
     if (telosAccountName.value === undefined) {
         return 'cInput'
     }
 
-    const isValidFormat = /^([a-z]|[1-5]|[.]){1,12}$/.test(telosAccountName.value.toLowerCase())
+    const isValidFormat = /^([a-z]|[1-5]|[.]){12}$/.test(telosAccountName.value.toLowerCase())
     const inputClass = isValidFormat ? 'cInput' : 'cInput cInput-invalid'
     return inputClass
+})
+
+const isValidAccountName = computed(() => {
+  if (!telosAccountName.value) return false
+  const isValidFormat = /^([a-z]|[1-5]|[.]){12}$/.test(telosAccountName.value.toLowerCase())
+  return isValidFormat
 })
 
 const closeModal = () => {
@@ -77,6 +89,8 @@ const closeModal = () => {
 
 async function createAccount () {
     try {
+      if (!isValidAccountName.value) return
+
         const isValidAccount = await validateAccountName() === true
         if (isValidAccount) {
             isLoading.value = true
@@ -108,7 +122,7 @@ async function createAccount () {
                 return false
             }
 
-            props.onCreateAccount(telosAccountName.value)
+            // props.onCreateAccount(telosAccountName.value)
             showModal.value = false
         }
     } catch {
