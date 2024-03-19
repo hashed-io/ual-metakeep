@@ -155,14 +155,11 @@ class FuelUserWrapper extends User {
           }
 
           modifiedTransaction.signatures = [...data.signatures]
-          // SIG_K1_KWyEv3oYHywu15Wd2qz26Fh9skjDtzTQqjuwV5iiotq6WrJcjMJfhB64A7gsT4acftVVLxH47qb3bJ95sWkgZ9mK35Lsfs
-          // https://github.com/greymass/greymassfuel-eosjs-demos/issues/7
-          debugger
           // Sign the modified transaction
           const locallySigned/*: SignedTransactionResponse */ =
           await this.user.signTransaction(
             modifiedTransaction,
-            Object.assign({ broadcast: false }, originalconfig)
+            Object.assign(originalconfig, { broadcast: false })
           ) /* as SignedTransactionResponse */
 
           // When using CleosAuthenticator the transaction returns empty

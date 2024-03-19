@@ -41,24 +41,29 @@ class MetakeepUser extends User {
         this.reasonCallback = callback;
     }
 
-    /**
-    * @param transaction    The transaction to be signed (an object that matches the RpcAPI structure).
-    */
-    async signTransaction(originalTransaction) {
+    handleCatchError(error) {
+        if (error.status === 'USER_REQUEST_DENIED') {
+            return new Error('antelope.evm.error_transaction_canceled');
+        } else {
+            return new Error('antelope.evm.error_send_transaction');
+        }
+    }
+    
+    async signTransaction (originalTransaction, txOptions = {}) {
         if (!metakeep) {
             throw new Error('metakeep is not initialized');
         }
-
+    
         try {
             // expire time in seconds
             const expireSeconds = 120;
-
+    
             // Retrieve transaction headers
             const info = await this.eosioCore.v1.chain.get_info();
             const header = info.getTransactionHeader(expireSeconds);
-
+    
             // collect all contract abis
-            const abi_promises = originalTransaction.actions.map((a) =>
+            const abi_promises = originalTransaction.actions.map(a =>
                 this.eosioCore.v1.chain.get_abi(a.account),
             );
             const responses = await Promise.all(abi_promises);
@@ -67,8 +72,8 @@ class MetakeepUser extends User {
                 contract: x.account,
                 abi: abis[i],
             }));
-
-            // create complete well-formed transaction
+    
+            // create complete well formed transaction
             const transaction = Transaction.from(
                 {
                     ...header,
@@ -76,79 +81,86 @@ class MetakeepUser extends User {
                 },
                 abis_and_names,
             );
-
-            const expiration = transaction.expiration.toString();
-            const ref_block_num = transaction.ref_block_num.toNumber();
-            const ref_block_prefix = transaction.ref_block_prefix.toNumber();
-
+    
+            const transaction_extensions = originalTransaction.transaction_extensions ?? [];
+            const context_free_actions = originalTransaction.context_free_actions ?? [];
+            const delay_sec = originalTransaction.delay_sec ?? 0;
+            const max_cpu_usage_ms = originalTransaction.max_cpu_usage_ms ?? 0;
+            const max_net_usage_words = originalTransaction.max_net_usage_words ?? 0;
+            const expiration = originalTransaction.expiration ?? transaction.expiration.toString();
+            const ref_block_num = originalTransaction.ref_block_num ?? transaction.ref_block_num.toNumber();
+            const ref_block_prefix = originalTransaction.ref_block_prefix ?? transaction.ref_block_prefix.toNumber();
+    
             // convert actions to JSON
             const actions = transaction.actions.map(a => ({
                 account: a.account.toJSON(),
                 name: a.name.toJSON(),
-                authorization: a.authorization.map((x) => ({
+                authorization: a.authorization.map(x => ({
                     actor: x.actor.toJSON(),
                     permission: x.permission.toJSON(),
                 })),
                 data: a.data.toJSON(),
             }));
-
+    
             // compose the complete transaction
             const complete_transaction = {
                 rawTransaction: {
-                    expiration: expiration,
-                    ref_block_num: ref_block_num,
-                    ref_block_prefix: ref_block_prefix,
-                    max_net_usage_words: 0,
-                    max_cpu_usage_ms: 0,
-                    delay_sec: 0,
-                    context_free_actions: [],
-                    actions: actions,
-                    transaction_extensions: []
+                    expiration,
+                    ref_block_num,
+                    ref_block_prefix,
+                    max_net_usage_words,
+                    max_cpu_usage_ms,
+                    delay_sec,
+                    context_free_actions,
+                    actions,
+                    transaction_extensions,
                 },
                 extraSigningData: {
                     chainId: this.chainId,
                 },
             };
-
+    
             // sign the transaction with metakeep
             const reason = this.reasonCallback ? this.reasonCallback(originalTransaction) : 'sign this transaction';
             const response = await metakeep.signTransaction(complete_transaction, reason);
             const signature = response.signature;
-
+    
+    
             // Pack the transaction for transport
             const packedTransaction = PackedTransaction.from({
                 signatures: [signature],
                 packed_context_free_data: '',
                 packed_trx: Serializer.encode({ object: transaction }),
             });
-
+    
+            if (txOptions?.broadcast === false) {
+                return {
+                    wasBroadcast: false,
+                    transactionId: '',
+                    status: '',
+                    transaction: packedTransaction,
+                };
+            }
             // Broadcast the signed transaction to the blockchain
             const pushResponse = await this.eosioCore.v1.chain.push_transaction(
                 packedTransaction,
             );
-
-            // compose the final response
+    
+            // we compose the final response
             const finalResponse = {
                 wasBroadcast: true,
                 transactionId: pushResponse.transaction_id,
                 status: pushResponse.processed.receipt.status,
                 transaction: packedTransaction,
             };
-
-            return Promise.resolve(finalResponse);
-
+    
+            return finalResponse;
+    
         } catch (e) {
-            if (e && e.response && e.response.json && e.response.json.error && e.response.json.error.details && e.response.json.error.details.length > 0) {
-                throw new Error(e.response.json.error.details[0].message);
-            } else if (e.status) {
-                throw new Error(e.status);
-            } else if (e.message) {
-                throw new Error(e.message);
-            } else {
-                throw new Error('Unknown error');
-            }
+            throw this.handleCatchError(e);
         }
     }
+    
 
     /**
      * Note: this method is not implemented yet
@@ -342,7 +354,6 @@ class MetakeepAuthenticator extends Authenticator {
             if (!metakeep) {
                 return reject(new Error('metakeep is not initialized'));
             }
-            // debugger
             if (this.userCredentials.email === '') {
                 return reject(new Error('No account email'));
             }
