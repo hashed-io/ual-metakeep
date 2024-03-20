@@ -15,7 +15,7 @@
           >
           <br/>
           <p class="cErrorLabel" v-if="errorMessage"> {{ errorMessage }}</p>
-          <p class="cErrorLabel" v-if="!isValidAccountName && telosAccountName">The Telos account must consist of exactly 12 characters, which can include lowercase letters from 'a' to 'z' and numbers from '0' to '9'. No spaces or special characters are allowed.</p>
+          <p class="cErrorLabel" v-if="!isValidAccountName && telosAccountName">The account must contain 12 lowercase characters only and number from 1 to 5 or a dot (.)</p>
           <br>
           <div class="cButtonsContainer">
             <button class="cButton cancelButton" @click="closeModal">Cancel</button>
