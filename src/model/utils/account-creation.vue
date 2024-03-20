@@ -122,7 +122,7 @@ async function createAccount () {
                 return false
             }
 
-            // props.onCreateAccount(telosAccountName.value)
+            props.onCreateAccount(telosAccountName.value)
             showModal.value = false
         }
     } catch {
