@@ -46,7 +46,8 @@ class MetakeepUser extends User {
         if (error.status === 'USER_REQUEST_DENIED') {
             return new Error('antelope.evm.error_transaction_canceled');
         } else {
-            return new Error(errorMessage);
+            let customMessage = error.details[0].message || errorMessage
+            return new Error(customMessage)
         }
     }
     
