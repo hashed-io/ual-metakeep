@@ -192,45 +192,45 @@ const {
     }
     
     
-    async login() {
-        // console.error('login');
-        // if (this.accountEmail === '') {
-        //     console.error('No account email');
-        //     throw new Error('No account email');
-        // }
+    // async login() {
+    //     // console.error('login');
+    //     // if (this.accountEmail === '') {
+    //     //     console.error('No account email');
+    //     //     throw new Error('No account email');
+    //     // }
     
-        // console.log('Tenemos mail: ', this.accountEmail);
-        // debugger
-        this.metakeep = new MetaKeep({
-            appId: this.appId,
-            // user: {
-            //     email: this.accountEmail,
-            // },
-        });
-        const { user, wallet } = await this.metakeep.loginUser()
-        this.accountEmail = user.email;
-        console.log('this.accountEmail link',  this.accountEmail);
+    //     // console.log('Tenemos mail: ', this.accountEmail);
+    //     // debugger
+    //     this.metakeep = new MetaKeep({
+    //         appId: this.appId,
+    //         // user: {
+    //         //     email: this.accountEmail,
+    //         // },
+    //     });
+    //     const { user, wallet } = await this.metakeep.loginUser()
+    //     this.accountEmail = user.email;
+    //     console.log('this.accountEmail link',  this.accountEmail);
     
-        const accountName = await this.resolveAccountName(wallet);
-        console.log("accountName", accountName)
-        const publicKey = this.cache[this.accountEmail][this.chainId].wallet.eosAddress;
+    //     const accountName = await this.resolveAccountName(wallet);
+    //     console.log("accountName", accountName)
+    //     const publicKey = this.cache[this.accountEmail][this.chainId].wallet.eosAddress;
     
-        try {
-            const permission = 'active';
-            return [
-                new MetakeepUser({
-                    accountName,
-                    permission,
-                    publicKey,
-                    chainId: this.chainId,
-                    rpc: this.rpc,
-                    metakeep: this.metakeep
-                }),
-            ];
-        } catch (err) {
-            throw new UALError(err.message, UALErrorType.Login, err, 'MetakeepAuthenticator');
-        }
-    }
+    //     try {
+    //         const permission = 'active';
+    //         return [
+    //             new MetakeepUser({
+    //                 accountName,
+    //                 permission,
+    //                 publicKey,
+    //                 chainId: this.chainId,
+    //                 rpc: this.rpc,
+    //                 metakeep: this.metakeep
+    //             }),
+    //         ];
+    //     } catch (err) {
+    //         throw new UALError(err.message, UALErrorType.Login, err, 'MetakeepAuthenticator');
+    //     }
+    // }
     
     logout() {
         window.localStorage.removeItem('accountEmail');

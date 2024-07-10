@@ -4343,10 +4343,10 @@ merge2@^1.3.0, merge2@^1.4.1:
   resolved "https://registry.yarnpkg.com/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
-metakeep@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/metakeep/-/metakeep-2.2.0.tgz#ef7023a1277b85e73a70ee29c18e7646d30e5827"
-  integrity sha512-Q59CX8sjlX1yD/q/pa1U2rKQeepWrlfN1BhfCkwXXxHLX1RfoCR9lCJ8qu20PRtPND6BFtGlmmN3REV/w/jFYg==
+metakeep@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/metakeep/-/metakeep-2.2.3.tgz#a253ac3768b0ecc3f8ebbc701f83babb870469d6"
+  integrity sha512-QUf+sexoPJ5IczLG4BAMcL7a9LpoqbeGcNOjxmxMVVhZ1y1bg0PUwUhQ8iL0STU/PYr9fbYVeAv+en6nHiCjAw==
   dependencies:
     js-base64 "^3.7.5"
     utf8 "^3.0.0"

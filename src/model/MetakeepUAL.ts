@@ -401,7 +401,11 @@ class MetakeepAuthenticator extends Authenticator {
      *
      * @param accountName    The account name of the user for Authenticators that do not store accounts (optional)
      */
-    login = async () => {
+    login = async ({ email = undefined }) => {
+
+        // this.setUserCredentials({
+        //     email
+        // })
 
         // if (this.userCredentials.email === '') {
         //     throw new Error('No account email');
@@ -409,16 +413,31 @@ class MetakeepAuthenticator extends Authenticator {
 
         this.loading = true;
 
+        const userParam = (email) ? {
+            email
+        } : undefined
+
+        if(!!email) {
+            this.setUserCredentials({
+                email
+            })
+        }
+
+        // console.log('userUAL', user)
+        // console.log('emailUAL', email)
+
         metakeep = new MetaKeep({
             // App id to configure UI
             appId: this.appId,
             // Signed in user's email address
-            // user: {
-            //     email: this.userCredentials.email,
-            // },
+            user: userParam
         });
+
+        // console.log('metakeep', metakeep)
     
-        let { user, wallet } = await metakeep.loginUser()
+        const getData = !!email ? metakeep.getWallet : metakeep.loginUser
+        let { user, wallet } = await getData()
+        console.log('userResult', user)
     
         this.setUserCredentials({
                 email: user.email,
@@ -427,7 +446,6 @@ class MetakeepAuthenticator extends Authenticator {
         try {
             const accountName = await this.resolveAccountName(wallet);
             const publicKey = metakeepCache.getEosAddress(this.userCredentials.email);
-
 
             const permission = 'active';
             this.loading = false;
