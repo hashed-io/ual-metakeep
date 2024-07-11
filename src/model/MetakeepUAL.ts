@@ -440,7 +440,7 @@ class MetakeepAuthenticator extends Authenticator {
         console.log('userResult', user)
     
         this.setUserCredentials({
-                email: user.email,
+            email: user.email,
         })
 
         try {
