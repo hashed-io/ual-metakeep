@@ -1,6 +1,6 @@
 {
   "name": "@jmgayosso/ual-metakeep",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "UAL implementation for metakeep",
   "main": "src/index.js",
   "scripts": {
