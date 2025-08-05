@@ -375,7 +375,11 @@ class MetakeepAuthenticator extends Authenticator {
 
             try {
                 // we try to get the account name from the public key
-                const response = await axios.post(`${this.rpc.endpoint}/v1/history/get_key_accounts`, {
+                let url = `${this.rpc.endpoint}/v1/history/get_key_accounts`;
+                if (this.rpc.endpoint.includes('testnet')) {
+                    url = 'https://hyperion-testnet.telosmadrid.io/v2/state/get_key_accounts';
+                }
+                const response = await axios.post(url, {
                     public_key: publicKey,
                 });
                 const accountExists = response?.data?.account_names.length > 0;
