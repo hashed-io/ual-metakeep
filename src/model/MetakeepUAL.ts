@@ -377,7 +377,7 @@ class MetakeepAuthenticator extends Authenticator {
                 // we try to get the account name from the public key
                 let url = `${this.rpc.endpoint}/v1/history/get_key_accounts`;
                 if (this.rpc.endpoint.includes('testnet')) {
-                    url = 'https://testnet.telos.caleos.io/v2/state/get_key_accounts';
+                    url = 'https://test.telos.eosusa.io/v2/state/get_key_accounts';
                 }
                 const response = await axios.post(url, {
                     public_key: publicKey,
