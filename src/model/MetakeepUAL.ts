@@ -19,6 +19,8 @@ const { createApp, ref } = require('vue');
 // const AccountCreation = require('utils/account-creation.vue').default
 const AccountCreation = require('./utils/account-creation').default
 
+const { getAccountsByKeys, getUniqueAccountNames } = require('./utils/accountUtils');
+
 let metakeep
 class MetakeepUser extends User {
     constructor({
@@ -228,6 +230,7 @@ class MetakeepAuthenticator extends Authenticator {
         };
         this.executeRecaptchaRequest = options.executeRecaptchaRequest
         this.apiURL = options.apiURL
+        this.readEndpoints = options.readEndpoints || [this.rpc.endpoint]
     }
 
     saveCache() {
@@ -375,16 +378,20 @@ class MetakeepAuthenticator extends Authenticator {
 
             try {
                 // we try to get the account name from the public key
-                let url = `${this.rpc.endpoint}/v1/history/get_key_accounts`;
-                if (this.rpc.endpoint.includes('testnet')) {
-                    url = 'https://test.telos.eosusa.io/v2/state/get_key_accounts';
-                }
-                const response = await axios.post(url, {
-                    public_key: publicKey,
-                });
-                const accountExists = response?.data?.account_names.length > 0;
+                // let url = `${this.rpc.endpoint}/v1/history/get_key_accounts`;
+                // if (this.rpc.endpoint.includes('testnet')) {
+                //     url = 'https://test.telos.eosusa.io/v2/state/get_key_accounts';
+                // }
+                // const response = await axios.post(url, {
+                //     public_key: publicKey,
+                // });
+                const response = await getAccountsByKeys(publicKey, this.readEndpoints)
+                const uniqueAccountNames = getUniqueAccountNames(response.accounts);
+
+                const accountExists = uniqueAccountNames.length > 0;
                 if (accountExists) {
-                    accountName = response.data.account_names[0];
+                    accountName = uniqueAccountNames[0];
+                    console.log('accountExists', accountName);
                 } else {
                     accountName = await this.createAccount(publicKey);
                 }
