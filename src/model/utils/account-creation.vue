@@ -2,9 +2,9 @@
 <div>
   <div class="cModal" v-if="showModal == true">
     <div class="cModal-content">
-        <p class="cTitle" v-if="isLoading == false">TLOS Account creation</p>
+        <p class="cTitle" v-if="isLoading == false">{{ chainName }} Account creation</p>
         <div v-if="isLoading == false">
-          <label for="accountName" class="label">Telos account name</label>
+          <label for="accountName" class="label">{{ chainName }} account name</label>
           <br>
           <input
             v-model="telosAccountName"
@@ -48,7 +48,7 @@
 
 <script setup>
 import { onMounted, ref, defineProps, computed } from 'vue'
-const props = defineProps(['onCancel', 'onCreateAccount', 'executeRecaptchaRequest', 'publicKey', 'apiURL'])
+const props = defineProps(['onCancel', 'onCreateAccount', 'executeRecaptchaRequest', 'publicKey', 'accountCreationEndpoint', 'chainName'])
 
 const showModal = ref(false)
 const isLoading = ref(false)
@@ -56,7 +56,7 @@ const telosAccountName = ref(undefined)
 const errorMessage = ref(undefined)
 const recaptchaToken = ref(undefined)
 
-const apiURL = props.apiURL
+const accountCreationEndpoint = props.accountCreationEndpoint
 
 onMounted(() => {
     showModal.value = true
@@ -96,7 +96,7 @@ async function createAccount () {
             isLoading.value = true
             recaptchaToken.value = await props.executeRecaptchaRequest()
 
-            const endpointURL = `${apiURL}/recaptchaCreate`
+            const endpointURL = `${accountCreationEndpoint}/recaptchaCreate`
 
             const response = await fetch(endpointURL, {
                 method: 'POST',
@@ -135,7 +135,7 @@ async function createAccount () {
 async function validateAccountName () {
     try {
         errorMessage.value = undefined
-        const endpointURL = `${apiURL}/accounts/${telosAccountName.value}`
+        const endpointURL = `${accountCreationEndpoint}/accounts/${telosAccountName.value}`
         isLoading.value = true
         const response = await fetch(endpointURL, {
             headers: {

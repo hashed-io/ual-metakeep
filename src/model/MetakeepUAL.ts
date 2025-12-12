@@ -229,8 +229,9 @@ class MetakeepAuthenticator extends Authenticator {
             jwt: '',
         };
         this.executeRecaptchaRequest = options.executeRecaptchaRequest
-        this.apiURL = options.apiURL
+        this.accountCreationEndpoint = options.accountCreationEndpoint
         this.readEndpoints = options.readEndpoints || [this.rpc.endpoint]
+        this.chainName = options.chainName || chain.chainName
     }
 
     saveCache() {
@@ -340,7 +341,8 @@ class MetakeepAuthenticator extends Authenticator {
                     },
                     executeRecaptchaRequest: this.executeRecaptchaRequest,
                     publicKey: publicKey,
-                    apiURL: this.apiURL
+                    accountCreationEndpoint: this.accountCreationEndpoint,
+                    chainName: this.chainName
                   })
                 app.mount(modalContainer);
             })
